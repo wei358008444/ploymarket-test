@@ -27,3 +27,5 @@ archive.zip
 .cache
 .DS_Store
 local_db*
+autoOrder.txt
+1.txt

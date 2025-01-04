@@ -34,7 +34,7 @@ load_dotenv()
 
 
 class Polymarket:
-    def __init__(self) -> None:
+    def __init__(self,private_key='') -> None:
         self.gamma_url = "https://gamma-api.polymarket.com"
         self.gamma_markets_endpoint = self.gamma_url + "/markets"
         self.gamma_events_endpoint = self.gamma_url + "/events"
@@ -43,8 +43,14 @@ class Polymarket:
         self.clob_auth_endpoint = self.clob_url + "/auth/api-key"
 
         self.chain_id = 137  # POLYGON
-        self.private_key = os.getenv("POLYGON_WALLET_PRIVATE_KEY")
+        if private_key == '':
+            self.private_key = os.getenv("POLYGON_WALLET_PRIVATE_KEY")
+        else:
+            self.private_key = private_key
+        
         self.polygon_rpc = "https://polygon-rpc.com"
+        self.polygon_rpc = "https://go.getblock.io/586dda0e9cda42468e1537768e4aec3c"
+        
         self.w3 = Web3(Web3.HTTPProvider(self.polygon_rpc))
 
         self.exchange_address = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e"
@@ -85,24 +91,28 @@ class Polymarket:
         pub_key = self.get_address_for_private_key()
         chain_id = self.chain_id
         web3 = self.web3
-        nonce = web3.eth.get_transaction_count(pub_key)
         usdc = self.usdc
         ctf = self.ctf
 
         # CTF Exchange
-        raw_usdc_approve_txn = usdc.functions.approve(
-            "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E", int(MAX_INT, 0)
-        ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
-        signed_usdc_approve_tx = web3.eth.account.sign_transaction(
-            raw_usdc_approve_txn, private_key=priv_key
-        )
-        send_usdc_approve_tx = web3.eth.send_raw_transaction(
-            signed_usdc_approve_tx.raw_transaction
-        )
-        usdc_approve_tx_receipt = web3.eth.wait_for_transaction_receipt(
-            send_usdc_approve_tx, 600
-        )
-        print(usdc_approve_tx_receipt)
+        allowance_usdc = self.usdc.functions.allowance(pub_key, "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E").call()
+        print(f"Current usdc allowance: {allowance_usdc}")
+        if allowance_usdc == 0:
+            nonce = web3.eth.get_transaction_count(pub_key)
+            raw_usdc_approve_txn = usdc.functions.approve(
+                "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E", int(MAX_INT, 0)
+            ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
+            signed_usdc_approve_tx = web3.eth.account.sign_transaction(
+                raw_usdc_approve_txn, private_key=priv_key
+            )
+            send_usdc_approve_tx = web3.eth.send_raw_transaction(
+                signed_usdc_approve_tx.raw_transaction
+            )
+            usdc_approve_tx_receipt = web3.eth.wait_for_transaction_receipt(
+                send_usdc_approve_tx, 600
+            )
+            print(usdc_approve_tx_receipt)
+        
 
         nonce = web3.eth.get_transaction_count(pub_key)
 
@@ -120,25 +130,27 @@ class Polymarket:
         )
         print(ctf_approval_tx_receipt)
 
-        nonce = web3.eth.get_transaction_count(pub_key)
-
         # Neg Risk CTF Exchange
-        raw_usdc_approve_txn = usdc.functions.approve(
-            "0xC5d563A36AE78145C45a50134d48A1215220f80a", int(MAX_INT, 0)
-        ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
-        signed_usdc_approve_tx = web3.eth.account.sign_transaction(
-            raw_usdc_approve_txn, private_key=priv_key
-        )
-        send_usdc_approve_tx = web3.eth.send_raw_transaction(
-            signed_usdc_approve_tx.raw_transaction
-        )
-        usdc_approve_tx_receipt = web3.eth.wait_for_transaction_receipt(
-            send_usdc_approve_tx, 600
-        )
-        print(usdc_approve_tx_receipt)
+        raw_allowance_usdc = self.usdc.functions.allowance(pub_key, "0xC5d563A36AE78145C45a50134d48A1215220f80a").call()
+        print(f"Current raw usdc allowance: {raw_allowance_usdc}")
+        if raw_allowance_usdc == 0:
+            nonce = web3.eth.get_transaction_count(pub_key)
+            raw_usdc_approve_txn = usdc.functions.approve(
+                "0xC5d563A36AE78145C45a50134d48A1215220f80a", int(MAX_INT, 0)
+            ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
+            signed_usdc_approve_tx = web3.eth.account.sign_transaction(
+                raw_usdc_approve_txn, private_key=priv_key
+            )
+            send_usdc_approve_tx = web3.eth.send_raw_transaction(
+                signed_usdc_approve_tx.raw_transaction
+            )
+            usdc_approve_tx_receipt = web3.eth.wait_for_transaction_receipt(
+                send_usdc_approve_tx, 600
+            )
+            print(usdc_approve_tx_receipt)
 
+  
         nonce = web3.eth.get_transaction_count(pub_key)
-
         raw_ctf_approval_txn = ctf.functions.setApprovalForAll(
             "0xC5d563A36AE78145C45a50134d48A1215220f80a", True
         ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
@@ -153,25 +165,27 @@ class Polymarket:
         )
         print(ctf_approval_tx_receipt)
 
-        nonce = web3.eth.get_transaction_count(pub_key)
-
         # Neg Risk Adapter
-        raw_usdc_approve_txn = usdc.functions.approve(
-            "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296", int(MAX_INT, 0)
-        ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
-        signed_usdc_approve_tx = web3.eth.account.sign_transaction(
-            raw_usdc_approve_txn, private_key=priv_key
-        )
-        send_usdc_approve_tx = web3.eth.send_raw_transaction(
-            signed_usdc_approve_tx.raw_transaction
-        )
-        usdc_approve_tx_receipt = web3.eth.wait_for_transaction_receipt(
-            send_usdc_approve_tx, 600
-        )
-        print(usdc_approve_tx_receipt)
+        adapter_allowance_usdc = self.usdc.functions.allowance(pub_key, "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296").call()
+        print(f"Current adapter usdc allowance: {adapter_allowance_usdc}")
+        if adapter_allowance_usdc == 0:
+            nonce = web3.eth.get_transaction_count(pub_key)
+            raw_usdc_approve_txn = usdc.functions.approve(
+                "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296", int(MAX_INT, 0)
+            ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
+            signed_usdc_approve_tx = web3.eth.account.sign_transaction(
+                raw_usdc_approve_txn, private_key=priv_key
+            )
+            send_usdc_approve_tx = web3.eth.send_raw_transaction(
+                signed_usdc_approve_tx.raw_transaction
+            )
+            usdc_approve_tx_receipt = web3.eth.wait_for_transaction_receipt(
+                send_usdc_approve_tx, 600
+            )
+            print(usdc_approve_tx_receipt)
 
+       
         nonce = web3.eth.get_transaction_count(pub_key)
-
         raw_ctf_approval_txn = ctf.functions.setApprovalForAll(
             "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296", True
         ).build_transaction({"chainId": chain_id, "from": pub_key, "nonce": nonce})
@@ -189,6 +203,7 @@ class Polymarket:
     def get_all_markets(self) -> "list[SimpleMarket]":
         markets = []
         res = httpx.get(self.gamma_markets_endpoint)
+        print(self.gamma_markets_endpoint)
         if res.status_code == 200:
             for market in res.json():
                 try:
@@ -238,11 +253,12 @@ class Polymarket:
     def get_all_events(self) -> "list[SimpleEvent]":
         events = []
         res = httpx.get(self.gamma_events_endpoint)
+        print(res)
+        print(self.gamma_events_endpoint)
         if res.status_code == 200:
             print(len(res.json()))
             for event in res.json():
                 try:
-                    print(1)
                     event_data = self.map_api_to_event(event)
                     events.append(SimpleEvent(**event_data))
                 except Exception as e:
@@ -355,6 +371,8 @@ class Polymarket:
         balance_res = self.usdc.functions.balanceOf(
             self.get_address_for_private_key()
         ).call()
+        print(self.get_address_for_private_key())
+        print(balance_res)
         return float(balance_res / 10e5)
 
 
